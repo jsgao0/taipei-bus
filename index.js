@@ -5,6 +5,7 @@ var download = require('download');
 var tmpDirName = new Date().getTime().toString();
 var tmpRawDataFullDirName = [__dirname, 'raw_data', tmpDirName].join('/');
 var tmpDataFullDirName = [__dirname, 'data', tmpDirName].join('/');
+var versionControlFile = [__dirname, 'v.json'].join('/');
 var CONSTANTS = {
     CITY: {
         TAIPEI_CITY: {
@@ -46,7 +47,7 @@ function processData(uri, filename) {
     return new Promise(function (finalResolve, finalReject) {
         console.log('start the process of bus data');
         console.log('downloading bus data');
-        download('https://tcgbusfs.blob.core.windows.net/blobbus/GetBusData.gz', tmpRawDataFullDirName, {
+        download(uri, tmpRawDataFullDirName, {
             filename: [filename, 'gz'].join('.')
         }).then(function () {
             console.log('decompressing bus gzip data');
@@ -80,7 +81,7 @@ function processData(uri, filename) {
                 });
             });
         }).then(function (busData) {
-            console.log(busData);
+            console.log(['The process of ', filename, '\'s data has been finished.'].join());
             finalResolve();
         }).catch(function (err) {
             console.error(err);
@@ -92,6 +93,17 @@ function processData(uri, filename) {
 Promise.all([
     processData(CONSTANTS.CITY.TAIPEI_CITY.URL, CONSTANTS.CITY.TAIPEI_CITY.FILENAME),
     processData(CONSTANTS.CITY.NEW_TAIPEI_CITY.URL, CONSTANTS.CITY.NEW_TAIPEI_CITY.FILENAME)
-]).then(function (){
-    console.log('complete');
+]).then(function () {
+    'use strict';
+    return new Promise(function (resolve, reject) {
+        jsonfile.writeFile(versionControlFile, {v: tmpDirName}, function (err) {
+            if (!err) {
+                resolve();
+            } else {
+                reject(err);
+            }
+        });
+    });
+}).then(function () {
+    console.log('All processes are completed.');
 });
