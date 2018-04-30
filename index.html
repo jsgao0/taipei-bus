@@ -20,10 +20,45 @@
             var map;
             function initMap() {
                 map = new google.maps.Map(document.getElementById('map'), {
-                center: {lat: -34.397, lng: 150.644},
-                zoom: 8
+                center: {lat: 25.105497, lng: 121.597366},
+                zoom: 11
                 });
             }
+            function ajax(uri) {
+                return new Promise(function (resolve, reject) {
+                var xhr = new XMLHttpRequest();
+                    xhr.onreadystatechange = function () {
+                        if (this.readyState == 4 && this.status == 200) {
+                            resolve(xhr.responseText);
+                        }
+                    };
+                    xhr.open('GET', uri);
+                    xhr.send();
+                });
+            }
+            function fetchVersion() {
+                return ajax('./v.json');
+            }
+            function initData(version, cityName) {
+                return ajax(['./data', version, [cityName, 'json'].join('.')].join('/'));
+            }
+
+            fetchVersion()
+                .then(function (vData) {
+                    vData = vData.replace(/(\r|\n)+/g, '');
+                    vData = JSON.parse(vData);
+                    return Promise.all([
+                        initData(vData.v, 'new-taipei-city'),
+                        initData(vData.v, 'taipei-city')
+                    ]);
+                })
+                .then(function (dataset) {
+                    console.log(JSON.parse(dataset[0]));
+                    console.log(JSON.parse(dataset[1]));
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
         </script>
         <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA53kVKXWl5TQ8mzBS1iut1AEft_xkET08&callback=initMap"
         async defer></script>
