@@ -17,6 +17,42 @@
     <body>
         <div id="map"></div>
         <script>
+            var CONSTANTS = {
+                CITY: {
+                    TAIPEI_CITY: {
+                        URL: 'https://tcgbusfs.blob.core.windows.net/blobbus/GetBusData.gz',
+                        FILENAME: 'taipei-city'
+                    },
+                    NEW_TAIPEI_CITY: {
+                        URL: 'https://tcgbusfs.blob.core.windows.net/ntpcbus/GetBusData.gz',
+                        FILENAME: 'new-taipei-city'
+                    }
+                },
+                CAR_TYPE: {
+                    NORMAL: 0, // 一般
+                    LOW_STAGE: 1, // 低底盤
+                    ACCIBILITY: 2, // 大復康巴士
+                    CIRCLE: 3 // 圓仔公車
+                },
+                DIRECTION: {
+                    GO: 0,
+                    BACK: 1
+                },
+                BUS_STATUS: {
+                    NORMAL: 0,
+                    ACCIDENT: 1,
+                    BROKEN: 2,
+                    TRAFFIC: 3,
+                    EMERGENCY: 4,
+                    FILL_UP: 5,
+                    OUT_OF_SERVICE: 99
+                },
+                DUTY_STATUS: {
+                    NORMAL: 0,
+                    IN_DUTY: 1,
+                    FINISHED: 2
+                }
+            };
             var map;
             function initMap() {
                 map = new google.maps.Map(document.getElementById('map'), {
@@ -55,8 +91,15 @@
                     ]);
                 })
                 .then(function (dataset) {
-                    console.log(JSON.parse(dataset[0]));
-                    console.log(JSON.parse(dataset[1]));
+                    var newTaipeiCityBusData = JSON.parse(dataset[0]),
+                        taipeiCityBusData = JSON.parse(dataset[1]),
+                        busData = [].concat(newTaipeiCityBusData.BusInfo).concat(taipeiCityBusData.BusInfo);
+                    busData = busData.filter(function (d) {
+                        return d.DutyStatus === CONSTANTS.DUTY_STATUS.NORMAL;
+                    });
+                    busData.forEach(function(d) {
+                        console.log(d);
+                    });
                 })
                 .catch(function (error) {
                     console.log(error);
