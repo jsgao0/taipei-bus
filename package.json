@@ -1,0 +1,29 @@
+{
+  "name": "taipei-bus",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jsgao0/taipei-bus.git"
+  },
+  "keywords": [
+    "taiwan",
+    "taipei",
+    "bus"
+  ],
+  "author": "jsgao0",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jsgao0/taipei-bus/issues"
+  },
+  "homepage": "https://github.com/jsgao0/taipei-bus#readme",
+  "dependencies": {
+    "download": "^6.2.5",
+    "gunzip-file": "^0.1.1",
+    "jsonfile": "^4.0.0"
+  }
+}
