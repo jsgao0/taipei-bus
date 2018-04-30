@@ -16,30 +16,6 @@ var CONSTANTS = {
             URL: 'https://tcgbusfs.blob.core.windows.net/ntpcbus/GetBusData.gz',
             FILENAME: 'new-taipei-city'
         }
-    },
-    CAR_TYPE: {
-        NORMAL: 0, // 一般
-        LOW_STAGE: 1, // 低底盤
-        ACCIBILITY: 2, // 大復康巴士
-        CIRCLE: 3 // 圓仔公車
-    },
-    DIRECTION: {
-        GO: 0,
-        BACK: 1
-    },
-    BUS_STATUS: {
-        NORMAL: 0,
-        ACCIDENT: 1,
-        BROKEN: 2,
-        TRAFFIC: 3,
-        EMERGENCY: 4,
-        FILL_UP: 5,
-        OUT_OF_SERVICE: 99
-    },
-    DUTY_STATUS: {
-        NORMAL: 0,
-        STARTED: 1,
-        FINISHED: 2
     }
 };
 
