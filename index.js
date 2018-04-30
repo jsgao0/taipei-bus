@@ -6,6 +6,16 @@ var tmpDirName = new Date().getTime().toString();
 var tmpRawDataFullDirName = [__dirname, 'raw_data', tmpDirName].join('/');
 var tmpDataFullDirName = [__dirname, 'data', tmpDirName].join('/');
 var CONSTANTS = {
+    CITY: {
+        TAIPEI_CITY: {
+            URL: 'https://tcgbusfs.blob.core.windows.net/blobbus/GetBusData.gz',
+            FILENAME: 'taipei-city'
+        },
+        NEW_TAIPEI_CITY: {
+            URL: 'https://tcgbusfs.blob.core.windows.net/ntpcbus/GetBusData.gz',
+            FILENAME: 'new-taipei-city'
+        }
+    },
     CAR_TYPE: {
         NORMAL: 0, // 一般
         LOW_STAGE: 1, // 低底盤
@@ -32,44 +42,56 @@ var CONSTANTS = {
     }
 };
 
-console.log('start the process of bus data');
-console.log('downloading bus data');
-download('https://tcgbusfs.blob.core.windows.net/blobbus/GetBusData.gz', tmpRawDataFullDirName, {
-    filename: 'taipei-city.gz'
-}).then(function () {
-    console.log('decompressing bus gzip data');
-    return new Promise(function (resolve, reject) {
-        var src = [tmpRawDataFullDirName, 'taipei-city.gz'].join('/');
-        var dest = [tmpDataFullDirName, 'taipei-city.json'].join('/');
-        if (!fs.existsSync(tmpDataFullDirName)) {
-            fs.mkdirSync(tmpDataFullDirName);
-        }
-        try {
-            gunzip(
-                src,
-                dest,
-                function () {
-                    resolve(dest);
+function processData(uri, filename) {
+    return new Promise(function (finalResolve, finalReject) {
+        console.log('start the process of bus data');
+        console.log('downloading bus data');
+        download('https://tcgbusfs.blob.core.windows.net/blobbus/GetBusData.gz', tmpRawDataFullDirName, {
+            filename: [filename, 'gz'].join('.')
+        }).then(function () {
+            console.log('decompressing bus gzip data');
+            return new Promise(function (resolve, reject) {
+                var src = [tmpRawDataFullDirName, [filename, 'gz'].join('.')].join('/');
+                var dest = [tmpDataFullDirName, [filename, 'json'].join('.')].join('/');
+                if (!fs.existsSync(tmpDataFullDirName)) {
+                    fs.mkdirSync(tmpDataFullDirName);
                 }
-            );
-        } catch (err) {
-            reject(err);
-        }
-    });
-}).then(function (filename) {
-    'use strict';
-    return new Promise(function (resolve, reject) {
-        jsonfile.readFile(filename, function (err, obj) {
-            if (!err) {
-                resolve(obj)
-            } else {
-                reject(err);
-            }
+                try {
+                    gunzip(
+                        src,
+                        dest,
+                        function () {
+                            resolve(dest);
+                        }
+                    );
+                } catch (err) {
+                    reject(err);
+                }
+            });
+        }).then(function (fullFilename) {
+            'use strict';
+            return new Promise(function (resolve, reject) {
+                jsonfile.readFile(fullFilename, function (err, obj) {
+                    if (!err) {
+                        resolve(obj)
+                    } else {
+                        reject(err);
+                    }
+                });
+            });
+        }).then(function (busData) {
+            console.log(busData);
+            finalResolve();
+        }).catch(function (err) {
+            console.error(err);
+            finalReject();
         });
     });
-}).then(function (busData) {
-    console.log(busData);
-    console.log('done');
-}).catch(function (err) {
-    console.error(err);
+}
+
+Promise.all([
+    processData(CONSTANTS.CITY.TAIPEI_CITY.URL, CONSTANTS.CITY.TAIPEI_CITY.FILENAME),
+    processData(CONSTANTS.CITY.NEW_TAIPEI_CITY.URL, CONSTANTS.CITY.NEW_TAIPEI_CITY.FILENAME)
+]).then(function (){
+    console.log('complete');
 });
