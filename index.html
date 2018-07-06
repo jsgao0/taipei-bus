@@ -2,8 +2,8 @@
 <html>
     <head>
         <title>動態公車資訊視覺化</title>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0"/>
         <style>
             #map {
                 height: 100%;
@@ -32,6 +32,20 @@
                 margin: 0;
                 padding: 0;
             }
+            .icon-credit {
+                background: #000;
+                color: #fff;
+                display: block;
+                position: fixed;
+                right: 0;
+                bottom: 0;
+                z-index: 1000;
+                padding: 3px;
+            }
+            img[src$=".svg"] {
+                transform: scale(.1);
+                transform-origin: 50% 100%;
+            }
             @media screen and (max-width: 600px) {
                 #title {
                     font-size: .9rem;
@@ -42,18 +56,9 @@
     <body>
         <h1 id="title" class="fade-out">動態公車資訊視覺化</h1>
         <div id="map"></div>
+        <div class="icon-credit">Icon made by Freepik from www.flaticon.com</div>
         <script>
             var CONSTANTS = {
-                CITY: {
-                    TAIPEI_CITY: {
-                        URL: 'https://tcgbusfs.blob.core.windows.net/blobbus/GetBusData.gz',
-                        FILENAME: 'taipei-city'
-                    },
-                    NEW_TAIPEI_CITY: {
-                        URL: 'https://tcgbusfs.blob.core.windows.net/ntpcbus/GetBusData.gz',
-                        FILENAME: 'new-taipei-city'
-                    }
-                },
                 CAR_TYPE: {
                     NORMAL: 0, // 一般
                     LOW_STAGE: 1, // 低底盤
@@ -74,33 +79,89 @@
                     OUT_OF_SERVICE: 99
                 },
                 DUTY_STATUS: {
-                    NORMAL: 0,
-                    IN_DUTY: 1,
-                    FINISHED: 2
+                    NORMAL: '0',
+                    IN_DUTY: '1',
+                    FINISHED: '2'
                 }
             };
-            var map;
             function initMap() {
-                map = new google.maps.Map(document.getElementById('map'), {
-                    center: {lat: 25.105497, lng: 121.597366},
-                    zoom: 11,
+                var map = new google.maps.Map(document.getElementById('map'), {
+                    center: {lat: 25.012036, lng: 121.5935309},
+                    zoom: 13,
                     maxZoom: 17,
                     minZoom: 11,
                     fullscreenControl: false,
                     mapTypeControl: false,
                     streetViewControl: false
                 });
+
+                fetchVersion()
+                    .then(function (vData) {
+                        vData = vData.replace(/(\r|\n)+/g, '');
+                        vData = JSON.parse(vData);
+                        return Promise.all([
+                            initData(vData.v, 'new-taipei-city'),
+                            initData(vData.v, 'taipei-city'),
+                            initData(vData.v, 'new-taipei-city-routes'),
+                            initData(vData.v, 'taipei-city-routes')
+                        ]);
+                    })
+                    .then(function (dataset) {
+                        var newTaipeiCityBusData = JSON.parse(dataset[0]),
+                            taipeiCityBusData = JSON.parse(dataset[1]),
+                            newTaipeiCityBusRoutes = JSON.parse(dataset[2]),
+                            taipeiCityBusRoutes = JSON.parse(dataset[3]),
+                            busData = [].concat(newTaipeiCityBusData.BusInfo).concat(taipeiCityBusData.BusInfo),
+                            routeData = [].concat(newTaipeiCityBusRoutes.BusInfo).concat(taipeiCityBusRoutes.BusInfo),
+                            routesHashMap;
+
+                        routesHashMap = routeData.reduce(function (hashMap, route) {
+                            var routeId = route.pathAttributeId;
+                            hashMap[routeId] = Object.assign({}, route);
+                            return hashMap;
+                        }, {});
+
+                        busData = busData.filter(function (d) {
+                            return d.DutyStatus === CONSTANTS.DUTY_STATUS.IN_DUTY;
+                        }).map(function (d) {
+                            var routeId = d.RouteID,
+                                route = routesHashMap[routeId];
+                            if (route) {
+                                d.Route = route;
+                            } else {
+                                console.log('there is no route id: ' + routeId);
+                            }
+                            return d;
+                        });
+
+                        busData.filter(function (bus) {
+                            return bus.Route && bus.Route.nameZh === '912';
+                        }).forEach(function (bus) {
+                            console.log(bus);
+                            var marker = new google.maps.Marker({
+                                icon: './icon/school-bus.svg',
+                                position: new google.maps.LatLng({
+                                    lat: parseFloat(bus.Latitude),
+                                    lng: parseFloat(bus.Longitude)
+                                })
+                            });
+                            marker.setMap(map);
+                        });
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
             }
             function ajax(uri) {
                 return new Promise(function (resolve, reject) {
-                var xhr = new XMLHttpRequest();
-                    xhr.onreadystatechange = function () {
-                        if (this.readyState == 4 && this.status == 200) {
-                            resolve(xhr.responseText);
-                        }
-                    };
-                    xhr.open('GET', uri);
-                    xhr.send();
+                    var xhr = new XMLHttpRequest();
+                        xhr.onreadystatechange = function () {
+                            if (this.readyState == 4 && this.status == 200) {
+                                resolve(xhr.responseText);
+                            }
+                        };
+                        xhr.open('GET', uri);
+                        xhr.send();
                 });
             }
             function fetchVersion() {
@@ -118,30 +179,6 @@
                 }, 3000);
             }
             showTitle();
-
-            fetchVersion()
-                .then(function (vData) {
-                    vData = vData.replace(/(\r|\n)+/g, '');
-                    vData = JSON.parse(vData);
-                    return Promise.all([
-                        initData(vData.v, 'new-taipei-city'),
-                        initData(vData.v, 'taipei-city')
-                    ]);
-                })
-                .then(function (dataset) {
-                    var newTaipeiCityBusData = JSON.parse(dataset[0]),
-                        taipeiCityBusData = JSON.parse(dataset[1]),
-                        busData = [].concat(newTaipeiCityBusData.BusInfo).concat(taipeiCityBusData.BusInfo);
-                    busData = busData.filter(function (d) {
-                        return d.DutyStatus === CONSTANTS.DUTY_STATUS.NORMAL;
-                    });
-                    busData.forEach(function(d) {
-                        console.log(d);
-                    });
-                })
-                .catch(function (error) {
-                    console.log(error);
-                });
         </script>
         <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA53kVKXWl5TQ8mzBS1iut1AEft_xkET08&callback=initMap"
         async defer></script>

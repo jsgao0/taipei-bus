@@ -10,10 +10,14 @@ var CONSTANTS = {
     CITY: {
         TAIPEI_CITY: {
             URL: 'https://tcgbusfs.blob.core.windows.net/blobbus/GetBusData.gz',
+            ROUTE_DATA_URL: 'https://tcgbusfs.blob.core.windows.net/blobbus/GetRoute.gz',
+            PATH_DATA_URL: 'https://tcgbusfs.blob.core.windows.net/blobbus/GetOrgPathAttribute.gz',
             FILENAME: 'taipei-city'
         },
         NEW_TAIPEI_CITY: {
             URL: 'https://tcgbusfs.blob.core.windows.net/ntpcbus/GetBusData.gz',
+            ROUTE_DATA_URL: 'https://tcgbusfs.blob.core.windows.net/ntpcbus/GetRoute.gz',
+            PATH_DATA_URL: 'https://tcgbusfs.blob.core.windows.net/ntpcbus/GetOrgPathAttribute.gz',
             FILENAME: 'new-taipei-city'
         }
     }
@@ -68,7 +72,9 @@ function processData(uri, filename) {
 
 Promise.all([
     processData(CONSTANTS.CITY.TAIPEI_CITY.URL, CONSTANTS.CITY.TAIPEI_CITY.FILENAME),
-    processData(CONSTANTS.CITY.NEW_TAIPEI_CITY.URL, CONSTANTS.CITY.NEW_TAIPEI_CITY.FILENAME)
+    processData(CONSTANTS.CITY.NEW_TAIPEI_CITY.URL, CONSTANTS.CITY.NEW_TAIPEI_CITY.FILENAME),
+    processData(CONSTANTS.CITY.TAIPEI_CITY.ROUTE_DATA_URL, CONSTANTS.CITY.TAIPEI_CITY.FILENAME + '-routes'),
+    processData(CONSTANTS.CITY.NEW_TAIPEI_CITY.ROUTE_DATA_URL, CONSTANTS.CITY.NEW_TAIPEI_CITY.FILENAME + '-routes')
 ]).then(function () {
     'use strict';
     return new Promise(function (resolve, reject) {
